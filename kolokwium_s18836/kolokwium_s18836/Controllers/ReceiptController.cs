@@ -80,18 +80,38 @@ namespace kolokwium_s18836.Controllers
             using (var con = new SqlConnection("Data Source=db-mssql;Initial Catalog=s18836;Integrated Security=True"))
             using (var com = new SqlCommand())
             {
+               
+                    com.Connection = con;
+                    con.Open();
 
-                com.Connection = con;
-                con.Open();
+                    var tran = con.BeginTransaction();
+                    com.Transaction = tran;
 
-                var tran = con.BeginTransaction();
-                com.Transaction = tran;
+                try
+                {
+                    var wpis = new Wpis();
+                    wpis.Date = request.Date;
+                    wpis.DueDate = request.DueDate;
+                    wpis.IdPatient = request.IdPatient;
+                    wpis.IdDoctor = request.IdDoctor;
 
-                var wpis = new Wpis();
-                wpis.Date = request.Date;
-                wpis.DueDate = request.DueDate;
-                wpis.IdPatient = request.IdPatient;
-                wpis.IdDoctor = request.IdDoctor;
+                    com.CommandText = "USE [2019SBD]; INSERT INTO Prescription VALUES(@id, @date , @duedate , @idpat, @iddoc)";
+                    com.Parameters.AddWithValue("@id", 1);
+                    com.Parameters.AddWithValue("@date", wpis.Date);
+                    com.Parameters.AddWithValue("@duedate", wpis.DueDate);
+                    com.Parameters.AddWithValue("@idpat", wpis.IdPatient);
+                    com.Parameters.AddWithValue("@iddoc", wpis.IdDoctor);
+
+                    com.ExecuteNonQuery();
+
+
+                }
+                catch (SqlException e)
+                {
+                    tran.Rollback();
+                }
+
+                tran.Commit();
               
             }
 
